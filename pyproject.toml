@@ -1,0 +1,18 @@
+[project]
+name = "hikari-components"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "hikari",
+]
+
+[tool.uv.sources]
+hikari = { git = "https://github.com/mplatypus/hikari.git", rev = "feature/modals-v2" }
+
+[dependency-groups]
+dev = [
+    "hikari-arc>=2.3.0",
+    "rich>=15.0.0",
+]

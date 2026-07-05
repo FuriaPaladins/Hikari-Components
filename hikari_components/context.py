@@ -5,8 +5,10 @@ import typing as t
 
 import hikari
 
-from hikari_components.handler import ComponentHandler
-from hikari_components.view import View
+
+if t.TYPE_CHECKING:
+    from .handler import ComponentHandler
+    from .view import View
 
 
 class BaseContext:

@@ -7,7 +7,8 @@ import hikari
 from hikari.api import special_endpoints
 from hikari.internal import data_binding, typing_extensions
 
-from hikari_components.context import ViewContext
+if t.TYPE_CHECKING:
+    from hikari_components.context import ViewContext
 
 CallbackT = t.Callable[["ViewContext", t.Any], t.Coroutine[t.Any, t.Any, None]]
 
@@ -17,7 +18,7 @@ CallbackT = t.Callable[["ViewContext", t.Any], t.Coroutine[t.Any, t.Any, None]]
 class Container(hikari.impl.ContainerComponentBuilder):
     def __init__(
         self,
-        components: list[special_endpoints.ContainerBuilderComponentsT],
+        components: list[t.Any],
         accent_color: hikari.UndefinedOr[hikari.Colour] = hikari.UNDEFINED,
         spoiler: bool = False,
     ):

@@ -7,8 +7,10 @@ import typing as t
 import hikari
 
 from .context import ModalContext, ViewContext
-from .modal import Modal
-from .view import View
+
+if t.TYPE_CHECKING:
+    from .modal import Modal
+    from .view import View
 
 
 class ComponentHandler:

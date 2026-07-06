@@ -67,7 +67,7 @@ class ComponentHandler:
             try:
                 await modal.callback(context)
             except Exception as e:
-                await modal.on_error(e, context)
+                await modal.on_error(context, e)
             finally:
                 modal.stop(context)
                 self._modals.pop(event.interaction.custom_id, None)
@@ -99,7 +99,7 @@ class ComponentHandler:
         self._views.pop(message_id, None)
 
     async def on_error(
-        self, error: Exception, context: t.Optional[ViewContext] = None
+        self, context: ViewContext, error: Exception
     ) -> None:
         """Called when an error occurs during interaction processing.
         Override this to implement custom error handling.
@@ -219,7 +219,7 @@ class ComponentHandler:
                     isinstance(e, hikari.NotFoundError)
                     and "Unknown interaction" in str(e)
                 ):
-                    await self.on_error(e, context)
+                    await self.on_error(context, e)
             finally:
                 defer_task.cancel()
                 await context._safe_defer()

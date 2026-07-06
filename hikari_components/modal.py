@@ -58,7 +58,7 @@ class Modal:
         """Called when the modal times out."""
         pass
 
-    async def on_error(self, error: Exception, context: ModalContext) -> None:
+    async def on_error(self, context: ModalContext, error: Exception) -> None:
         """Called when an error occurs during the callback."""
         print(f"Ignoring unhandled exception in modal {self.__class__.__name__}: {error}")
 

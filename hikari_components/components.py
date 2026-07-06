@@ -226,9 +226,9 @@ class Section(hikari.impl.SectionComponentBuilder):
     def __init__(
         self,
         accessory: special_endpoints.SectionBuilderAccessoriesT,
-        components: list[special_endpoints.SectionBuilderComponentsT],
+        components: list[special_endpoints.SectionBuilderComponentsT | None],
     ):
-        super().__init__(accessory=accessory, components=components)
+        super().__init__(accessory=accessory, components=[i for i in components if i])
 
     @property
     def accessory(self) -> special_endpoints.SectionBuilderAccessoriesT:

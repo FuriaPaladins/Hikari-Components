@@ -43,6 +43,11 @@ class BaseContext:
         """The member who triggered the interaction, if any."""
         return self._interaction.member
 
+    @property
+    def user(self) -> hikari.User:
+        """The user who triggered this interaction."""
+        return self._interaction.user
+    
     async def _safe_defer(self) -> None:
         """Internal auto-deferral mechanism."""
         async with self._lock:

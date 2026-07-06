@@ -6,7 +6,6 @@ import typing as t
 
 import hikari
 
-
 if t.TYPE_CHECKING:
     from .handler import ComponentHandler
     from .view import View
@@ -23,7 +22,7 @@ class BaseContext:
         self._lock = asyncio.Lock()
 
         self._delete_after_task: t.Optional[asyncio.Task[None]] = None
-        
+
     @property
     def interaction(
         self,
@@ -70,7 +69,7 @@ class BaseContext:
     def guild_id(self) -> hikari.Snowflake | None:
         """The ID of the guild the context represents. Will be None in DMs."""
         return self._interaction.guild_id
-        
+
     async def _safe_defer(self) -> None:
         """Internal auto-deferral mechanism."""
         async with self._lock:
@@ -84,48 +83,62 @@ class BaseContext:
             except (hikari.NotFoundError, hikari.BadRequestError):
                 pass
 
-    async def _do_delete_after(self, delay: float) -> None:
-            """Internal task to sleep and delete the initial response."""
-            await asyncio.sleep(delay)
-            try:
+    async def _do_delete_after(
+        self, delay: float, message: t.Optional[hikari.Message] = None
+    ) -> None:
+        """Internal task to sleep and delete a specific response."""
+        await asyncio.sleep(delay)
+        try:
+            if message is not None:
+                await self._interaction.delete_message(message)
+            else:
                 await self._interaction.delete_initial_response()
-            except (hikari.NotFoundError, hikari.BadRequestError):
-                pass  # Message was already deleted or interaction expired
-            finally:
-                self._delete_after_task = None
-    
-    def delete_after(self, delay: t.Union[int, float, datetime.timedelta]) -> None:
-            """Delete the response after the specified delay.
-    
-            Parameters
-            ----------
-            delay : Union[int, float, datetime.timedelta]
-                The delay after which the response should be deleted.
-            """
-            if self._delete_after_task is not None:
-                raise RuntimeError("A delete_after task is already running.")
-    
-            if isinstance(delay, datetime.timedelta):
-                delay = delay.total_seconds()
-                
-            self._delete_after_task = asyncio.create_task(self._do_delete_after(delay))
-                        
-    async def respond(self, *args: t.Any, delete_after: t.Optional[t.Union[int, float, datetime.timedelta]] = None, **kwargs: t.Any) -> t.Any:
+        except (hikari.NotFoundError, hikari.BadRequestError):
+            pass  # Message was already deleted or interaction expired
+        finally:
+            self._delete_after_task = None
+
+    def delete_after(
+        self,
+        delay: t.Union[int, float, datetime.timedelta],
+        message: t.Optional[hikari.Message] = None,
+    ) -> None:
+        """Delete the response after the specified delay."""
+        if self._delete_after_task is not None:
+            raise RuntimeError("A delete_after task is already running.")
+
+        if isinstance(delay, datetime.timedelta):
+            delay = delay.total_seconds()
+
+        self._delete_after_task = asyncio.create_task(
+            self._do_delete_after(delay, message)
+        )
+
+    async def respond(
+        self,
+        *args: t.Any,
+        delete_after: t.Optional[t.Union[int, float, datetime.timedelta]] = None,
+        **kwargs: t.Any,
+    ) -> t.Any:
         """Respond to the interaction.
         This creates an initial response or executes a webhook if already responded.
         """
+        response_msg: t.Optional[hikari.Message] = None
+
         async with self._lock:
             if self._issued_response:
                 response = await self._interaction.execute(*args, **kwargs)
+                response_msg = response
             else:
                 self._issued_response = True
                 response = await self._interaction.create_initial_response(
                     hikari.ResponseType.MESSAGE_CREATE, *args, **kwargs
                 )
-        
+
+        # Trigger the deletion task for the specific response created above
         if delete_after is not None:
-            self.delete_after(delete_after)
-            
+            self.delete_after(delete_after, message=response_msg)
+
         return response
 
     async def edit_response(self, *args: t.Any, **kwargs: t.Any) -> t.Any:

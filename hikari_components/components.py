@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import secrets
 import typing as t
+from collections.abc import Sequence
 
 import hikari
 from hikari.api import special_endpoints
@@ -88,7 +88,9 @@ class Row(hikari.impl.MessageActionRowBuilder):
         super().__init__(components=[i for i in components if i])
 
     @property
-    def components(self) -> Sequence[special_endpoints.MessageActionRowBuilderComponentsT]:
+    def components(
+        self,
+    ) -> Sequence[special_endpoints.MessageActionRowBuilderComponentsT]:
         """Get the components of the row."""
         self._components = [i for i in self._components if i is not None]
         return self._components
@@ -183,11 +185,13 @@ class LinkButton(hikari.impl.LinkButtonBuilder):
         url: str,
         label: str | hikari.UndefinedType = hikari.UNDEFINED,
         *,
-        emoji: hikari.Snowflakeish | hikari.Emoji | str | hikari.UndefinedType = hikari.UNDEFINED,
+        emoji: hikari.Snowflakeish
+        | hikari.Emoji
+        | str
+        | hikari.UndefinedType = hikari.UNDEFINED,
         is_disabled: bool = False,
         item_id: str | None = None,
     ):
-
         super().__init__(
             url=url,
             label=label,
@@ -793,6 +797,68 @@ class SelectMenuRow(Row):
 """ Modal Components """
 
 
+class ModalLabel(hikari.impl.LabelComponentBuilder):
+    def __init__(
+        self, label: str, component: t.Any, description: hikari.UndefinedOr[str] = hikari.UNDEFINED
+    ):
+        super().__init__(label=label, description=description, component=component)
+
+
+class TextInput(hikari.impl.TextInputBuilder):
+    def __init__(
+        self,
+        *,
+        custom_id: str,
+        label: hikari.UndefinedOr[str] = hikari.UNDEFINED,
+        style: hikari.TextInputStyle = hikari.TextInputStyle.SHORT,
+        placeholder: hikari.UndefinedOr[str] = hikari.UNDEFINED,
+        value: hikari.UndefinedOr[str] = hikari.UNDEFINED,
+        required: bool = True,
+        min_length: int = 0,
+        max_length: int = 4000,
+    ):
+        super().__init__(
+            custom_id=custom_id,
+            label=label,
+            style=style,
+            placeholder=placeholder,
+            value=value,
+            required=required,
+            min_length=min_length,
+            max_length=max_length,
+        )
+
+
+class ModalTextInput(ModalLabel):
+    def __init__(
+        self,
+        label: str,
+        custom_id: str,
+        description: hikari.UndefinedOr[str] = hikari.UNDEFINED,
+        text: hikari.UndefinedOr[str] = hikari.UNDEFINED,
+        style: hikari.TextInputStyle = hikari.TextInputStyle.SHORT,
+        placeholder: hikari.UndefinedOr[str] = hikari.UNDEFINED,
+        value: hikari.UndefinedOr[str] = hikari.UNDEFINED,
+        required: bool = True,
+        min_length: int = 0,
+        max_length: int = 4000,
+    ):
+        super().__init__(
+            label=label,
+            description=description,
+            component=TextInput(
+                custom_id=custom_id,
+                label=text,
+                style=style,
+                placeholder=placeholder,
+                value=value,
+                required=required,
+                min_length=min_length,
+                max_length=max_length,
+            ),
+        )
+
+
 class FileUploadComponent(hikari.impl.FileUploadComponentBuilder):
     def __init__(
         self,
@@ -809,7 +875,7 @@ class FileUploadComponent(hikari.impl.FileUploadComponentBuilder):
         )
 
 
-class ModalFileUpload(hikari.impl.LabelComponentBuilder):
+class ModalFileUpload(ModalLabel):
     """File Upload Component already wrapped in a LabelComponentBuilder"""
 
     def __init__(
@@ -830,7 +896,7 @@ class ModalFileUpload(hikari.impl.LabelComponentBuilder):
         super().__init__(label=label, description=description, component=self._menu)
 
 
-class ModalSelectMenu(hikari.impl.LabelComponentBuilder):
+class ModalSelectMenu(ModalLabel):
     def __init__(
         self,
         *,
@@ -859,8 +925,7 @@ class ModalSelectMenu(hikari.impl.LabelComponentBuilder):
         super().__init__(label=label, description=description, component=self._menu)
 
 
-
-class ModalTextSelectMenu(hikari.impl.LabelComponentBuilder):
+class ModalTextSelectMenu(ModalLabel):
     def __init__(
         self,
         *,

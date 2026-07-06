@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 import typing as t
 
 import hikari
@@ -21,6 +22,8 @@ class BaseContext:
         self._issued_response = False
         self._lock = asyncio.Lock()
 
+        self._delete_after_task: t.Optional[asyncio.Task[None]] = None
+        
     @property
     def interaction(
         self,
@@ -81,18 +84,49 @@ class BaseContext:
             except (hikari.NotFoundError, hikari.BadRequestError):
                 pass
 
-    async def respond(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
+    async def _do_delete_after(self, delay: float) -> None:
+            """Internal task to sleep and delete the initial response."""
+            await asyncio.sleep(delay)
+            try:
+                await self._interaction.delete_initial_response()
+            except (hikari.NotFoundError, hikari.BadRequestError):
+                pass  # Message was already deleted or interaction expired
+            finally:
+                self._delete_after_task = None
+    
+    def delete_after(self, delay: t.Union[int, float, datetime.timedelta]) -> None:
+            """Delete the response after the specified delay.
+    
+            Parameters
+            ----------
+            delay : Union[int, float, datetime.timedelta]
+                The delay after which the response should be deleted.
+            """
+            if self._delete_after_task is not None:
+                raise RuntimeError("A delete_after task is already running.")
+    
+            if isinstance(delay, datetime.timedelta):
+                delay = delay.total_seconds()
+                
+            self._delete_after_task = asyncio.create_task(self._do_delete_after(delay))
+                        
+    async def respond(self, *args: t.Any, delete_after: t.Optional[t.Union[int, float, datetime.timedelta]] = None, **kwargs: t.Any) -> t.Any:
         """Respond to the interaction.
         This creates an initial response or executes a webhook if already responded.
         """
         async with self._lock:
             if self._issued_response:
-                return await self._interaction.execute(*args, **kwargs)
-
-            self._issued_response = True
-            return await self._interaction.create_initial_response(
-                hikari.ResponseType.MESSAGE_CREATE, *args, **kwargs
-            )
+                response = await self._interaction.execute(*args, **kwargs)
+            else:
+                self._issued_response = True
+                response = await self._interaction.create_initial_response(
+                    hikari.ResponseType.MESSAGE_CREATE, *args, **kwargs
+                )
+        
+        if delete_after is not None:
+            self.delete_after(delete_after)
+            
+        return response
 
     async def edit_response(self, *args: t.Any, **kwargs: t.Any) -> t.Any:
         """Edit the interaction's initial response."""

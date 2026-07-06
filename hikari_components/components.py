@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 import secrets
 import typing as t
 
@@ -87,7 +88,7 @@ class Row(hikari.impl.MessageActionRowBuilder):
         super().__init__(components=components)
 
     @property
-    def components(self) -> list[special_endpoints.MessageActionRowBuilderComponentsT]:
+    def components(self) -> Sequence[special_endpoints.MessageActionRowBuilderComponentsT]:
         """Get the components of the row."""
         self._components = [i for i in self._components if i is not None]
         return self._components
@@ -236,7 +237,7 @@ class Section(hikari.impl.SectionComponentBuilder):
         self._accessory = value
 
     @property
-    def components(self) -> list[special_endpoints.SectionBuilderComponentsT]:
+    def components(self) -> Sequence[special_endpoints.SectionBuilderComponentsT]:
         """Get the components of the container."""
         self._components = [i for i in self._components if i is not None]
         return self._components
@@ -317,10 +318,10 @@ class Thumbnail(hikari.impl.ThumbnailComponentBuilder):
 
 class MediaGallery(hikari.impl.MediaGalleryComponentBuilder):
     def __init__(self, items: list[special_endpoints.MediaGalleryItemBuilder]):
-        super().__init__(items=items)
+        super().__init__(items=[i for i in items if i.media])
 
     @property
-    def items(self) -> list[special_endpoints.MediaGalleryItemBuilder]:
+    def items(self) -> Sequence[special_endpoints.MediaGalleryItemBuilder]:
         """Get the items of the media gallery."""
         return self._items
 
@@ -334,10 +335,10 @@ class MediaGallery(hikari.impl.MediaGalleryComponentBuilder):
         self,
     ) -> tuple[
         t.MutableMapping[str, t.Any],
-        t.Sequence[hikari.files.Resource[hikari.files.AsyncReader]],
+        Sequence[hikari.files.Resource[hikari.files.AsyncReader]],
     ]:
-        items_payload: list[t.MutableMapping[str, t.Any]] = []
-        attachments: list[hikari.files.Resource[hikari.files.AsyncReader]] = []
+        items_payload: Sequence[t.MutableMapping[str, t.Any]] = []
+        attachments: Sequence[hikari.files.Resource[hikari.files.AsyncReader]] = []
         for item in self.items:
             item_payload, item_attachments = item.build()
             items_payload.append(item_payload)
@@ -561,7 +562,7 @@ class TextSelectMenu(hikari.impl.TextSelectMenuBuilder):
     def __init__(
         self,
         *,
-        options: list[SelectOption],
+        options: Sequence[SelectOption],
         callback: CallbackT | None = None,
         placeholder: hikari.UndefinedOr[str] = hikari.UNDEFINED,
         min_values: int = 0,
@@ -586,7 +587,7 @@ class TextSelectMenu(hikari.impl.TextSelectMenuBuilder):
         self.item_id = item_id
 
     @property
-    def options(self) -> t.Sequence[special_endpoints.SelectOptionBuilder]:
+    def options(self) -> Sequence[special_endpoints.SelectOptionBuilder]:
         """Get the options of the select menu."""
         return self._options
 
@@ -642,7 +643,7 @@ class TextSelectMenuRow(Row):
     def __init__(
         self,
         *,
-        options: list[SelectOption],
+        options: Sequence[SelectOption],
         callback: CallbackT | None = None,
         placeholder: hikari.UndefinedOr[str] = hikari.UNDEFINED,
         min_values: int = 0,
@@ -858,6 +859,7 @@ class ModalSelectMenu(hikari.impl.LabelComponentBuilder):
         super().__init__(label=label, description=description, component=self._menu)
 
 
+
 class ModalTextSelectMenu(hikari.impl.LabelComponentBuilder):
     def __init__(
         self,
@@ -865,7 +867,7 @@ class ModalTextSelectMenu(hikari.impl.LabelComponentBuilder):
         label: str,
         custom_id: str,
         description: hikari.UndefinedOr[str] = hikari.UNDEFINED,
-        options: list[SelectOption],
+        options: Sequence[SelectOption],
         placeholder: hikari.UndefinedOr[str] = hikari.UNDEFINED,
         min_values: int = 0,
         max_values: int = 1,

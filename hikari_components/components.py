@@ -83,9 +83,9 @@ class Text(hikari.impl.TextDisplayComponentBuilder):
 
 class Row(hikari.impl.MessageActionRowBuilder):
     def __init__(
-        self, components: list[special_endpoints.MessageActionRowBuilderComponentsT]
+        self, components: Sequence[special_endpoints.MessageActionRowBuilderComponentsT]
     ):
-        super().__init__(components=components)
+        super().__init__(components=[i for i in components if i])
 
     @property
     def components(self) -> Sequence[special_endpoints.MessageActionRowBuilderComponentsT]:
@@ -317,7 +317,7 @@ class Thumbnail(hikari.impl.ThumbnailComponentBuilder):
 
 
 class MediaGallery(hikari.impl.MediaGalleryComponentBuilder):
-    def __init__(self, items: list[special_endpoints.MediaGalleryItemBuilder]):
+    def __init__(self, items: Sequence[special_endpoints.MediaGalleryItemBuilder]):
         super().__init__(items=[i for i in items if i.media])
 
     @property

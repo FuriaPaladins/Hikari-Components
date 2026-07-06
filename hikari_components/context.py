@@ -47,7 +47,27 @@ class BaseContext:
     def user(self) -> hikari.User:
         """The user who triggered this interaction."""
         return self._interaction.user
-    
+
+    @property
+    def app_permissions(self) -> hikari.Permissions:
+        """The permissions of the bot. Will be None in DMs."""
+        return self._interaction.app_permissions
+
+    @property
+    def channel_id(self) -> hikari.Snowflake:
+        """The ID of the channel the context represents."""
+        return self._interaction.channel_id
+
+    @property
+    def channel(self) -> hikari.InteractionChannel:
+        """The channel the context represents."""
+        return self._interaction.channel
+
+    @property
+    def guild_id(self) -> hikari.Snowflake | None:
+        """The ID of the guild the context represents. Will be None in DMs."""
+        return self._interaction.guild_id
+        
     async def _safe_defer(self) -> None:
         """Internal auto-deferral mechanism."""
         async with self._lock:

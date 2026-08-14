@@ -52,7 +52,7 @@ class Modal:
 
     async def callback(self, ctx: ModalContext) -> None:
         """Called when the modal is submitted."""
-        pass
+        await ctx.defer()
 
     async def on_timeout(self) -> None:
         """Called when the modal times out."""

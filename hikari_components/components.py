@@ -8,10 +8,8 @@ import hikari
 from hikari.api import special_endpoints
 from hikari.internal import data_binding, typing_extensions
 
-if t.TYPE_CHECKING:
-    from hikari_components.context import ViewContext
 
-CallbackT = t.Callable[["ViewContext", t.Any], t.Coroutine[t.Any, t.Any, None]]
+CallbackT = t.Callable[..., t.Coroutine[t.Any, t.Any, t.Any]]
 
 """ General/Message Components """
 
@@ -83,9 +81,9 @@ class Text(hikari.impl.TextDisplayComponentBuilder):
 
 class Row(hikari.impl.MessageActionRowBuilder):
     def __init__(
-        self, components: Sequence[special_endpoints.MessageActionRowBuilderComponentsT]
+        self, components: Sequence[special_endpoints.MessageActionRowBuilderComponentsT | None]
     ):
-        super().__init__(components=[i for i in components if i])
+        super().__init__(components=[i for i in components if i is not None])
 
     @property
     def components(

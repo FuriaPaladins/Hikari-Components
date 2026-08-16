@@ -120,7 +120,28 @@ class ComponentHandler:
         else:
             msg = await ctx.respond(components=components)
 
-        view.message = await msg.retrieve_message()
+        if isinstance(msg, hikari.Message):
+            view.message = msg
+        elif hasattr(msg, "retrieve_message") and callable(msg.retrieve_message):
+            view.message = await msg.retrieve_message()
+        elif hasattr(msg, "fetch_message") and callable(msg.fetch_message):
+            view.message = await msg.fetch_message()
+        elif (
+            isinstance(msg, hikari.InteractionCallbackResponse)
+            and msg.resource is not hikari.UNDEFINED
+            and msg.resource.message is not hikari.UNDEFINED
+            and msg.resource.message is not None
+        ):
+            view.message = msg.resource.message
+        elif hasattr(msg, "interaction") and hasattr(msg.interaction, "fetch_initial_response"):
+            view.message = await msg.interaction.fetch_initial_response()
+        elif hasattr(ctx, "interaction") and hasattr(ctx.interaction, "fetch_initial_response"):
+            view.message = await ctx.interaction.fetch_initial_response()
+        elif hasattr(ctx, "fetch_initial_response") and callable(ctx.fetch_initial_response):
+            view.message = await ctx.fetch_initial_response()
+        else:
+            view.message = None
+
         if hasattr(ctx, "command"):
             view.command = ctx.command
         view.initial_context = ctx

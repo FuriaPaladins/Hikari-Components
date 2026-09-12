@@ -114,7 +114,7 @@ class View:
         if self._timeout_task and not self._timeout_task.done():
             self._timeout_task.cancel()
 
-        if self.timeout is not None and self.timeout > 0:
+        if self.timeout is not None and (self.timeout > 0 or self.timeout == -1):
             if self._client:
                 self._timeout_task = asyncio.create_task(
                     self._client.handle_timeout(self)

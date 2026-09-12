@@ -13,7 +13,7 @@ if t.TYPE_CHECKING:
 class View:
     """Base View class for managing state and components."""
 
-    def __init__(self, timeout: float = 120.0) -> None:
+    def __init__(self, timeout: float = -1.0) -> None:
         self.components: list[t.Any] = []
         self.timeout = timeout
         self.message: t.Optional[hikari.Message] = None

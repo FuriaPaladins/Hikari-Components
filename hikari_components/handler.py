@@ -16,8 +16,9 @@ if t.TYPE_CHECKING:
 class ComponentHandler:
     """A handler that processes component and modal interactions."""
 
-    def __init__(self, bot: hikari.GatewayBotAware, client: t.Any = None):
+    def __init__(self, bot: hikari.GatewayBotAware, client: t.Any = None, timeout: float = 120.0):
         self._app = bot
+        self._global_timeout = timeout
         self._client = client
         self._views: t.Dict[int, View] = {}
         self._modals: t.Dict[str, Modal] = {}
@@ -160,7 +161,7 @@ class ComponentHandler:
         return view.message
 
     async def handle_timeout(self, view: View) -> None:
-        await asyncio.sleep(view.timeout)
+        await asyncio.sleep(self._global_timeout if view.timeout == -1 else view.timeout)
 
         try:
             await view.on_timeout()

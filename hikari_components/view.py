@@ -51,6 +51,10 @@ class View:
                 if found := traverse(child):
                     return found
 
+            for child in getattr(component, "items", []):
+                if found := traverse(child):
+                    return found
+
             if accessory := getattr(component, "accessory", None):
                 if found := traverse(accessory):
                     return found
@@ -148,12 +152,66 @@ class View:
             for child in getattr(component, "components", []):
                 yield from traverse(child)
 
+            for child in getattr(component, "items", []):
+                yield from traverse(child)
+
             accessory = getattr(component, "accessory", None)
             if accessory:
                 yield from traverse(accessory)
 
         for comp in self.components:
             yield from traverse(comp)
+
+    def sync_cdn_urls(self, message_components: t.Sequence[t.Any]) -> None:
+        """Extracts CDN URLs from Discord's returned components and updates local media builders
+        so that subsequent edits send pure JSON instead of re-uploading file bytes.
+        """
+        cdn_urls: list[str] = []
+
+        def extract_urls(comp: t.Any) -> None:
+            # Check MediaGallery items
+            for item in getattr(comp, "items", []):
+                media = getattr(item, "media", None)
+                res = getattr(media, "resource", None)
+                if hasattr(res, "url") and str(res.url).startswith("https://"):
+                    cdn_urls.append(str(res.url))
+
+            # Check individual components with media or file
+            media = getattr(comp, "media", getattr(comp, "file", None))
+            res = getattr(media, "resource", None)
+            if hasattr(res, "url") and str(res.url).startswith("https://"):
+                cdn_urls.append(str(res.url))
+
+            for child in getattr(comp, "components", []):
+                extract_urls(child)
+
+            if accessory := getattr(comp, "accessory", None):
+                extract_urls(accessory)
+
+        for top_comp in message_components:
+            extract_urls(top_comp)
+
+        if not cdn_urls:
+            return
+
+        url_iter = iter(cdn_urls)
+        for comp in self._walk_components():
+            for attr in ("media", "file"):
+                if not hasattr(comp, attr):
+                    continue
+                res = getattr(comp, attr)
+                if res is None:
+                    continue
+                if isinstance(res, str) and not res.startswith("attachment://"):
+                    continue
+
+                try:
+                    resource = hikari.files.ensure_resource(res)
+                    if resource.url.startswith("attachment://"):
+                        if new_url := next(url_iter, None):
+                            setattr(comp, attr, new_url)
+                except Exception:
+                    continue
 
     def disable_all_items(self) -> None:
         """Disables all interactive components in the view."""

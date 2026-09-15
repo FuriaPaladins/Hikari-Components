@@ -16,9 +16,8 @@ if t.TYPE_CHECKING:
 class ComponentHandler:
     """A handler that processes component and modal interactions."""
 
-    def __init__(self, bot: hikari.GatewayBotAware, client: t.Any = None, timeout: float = 120.0):
+    def __init__(self, bot: hikari.GatewayBotAware, client: t.Any = None):
         self._app = bot
-        self._global_timeout = timeout
         self._client = client
         self._views: t.Dict[int, View] = {}
         self._modals: t.Dict[str, Modal] = {}
@@ -93,6 +92,10 @@ class ComponentHandler:
         if hasattr(interaction, "values") and hasattr(button, "values"):
             setattr(button, "values", interaction.values)
 
+        # Auto-sync CDN URLs from message components so edits do not re-upload bytes
+        if hasattr(interaction, "message") and interaction.message and hasattr(interaction.message, "components") and interaction.message.components:
+            view.sync_cdn_urls(interaction.message.components)
+
         await self.handling_logic(view, interaction, context, button)
 
     def _remove_handler(self, message_id: int) -> None:
@@ -156,12 +159,15 @@ class ComponentHandler:
         if not view.has_interactive_components:
             return view.message
 
-        self._views[view.message.id] = view
-        await view.schedule_timeout()
+        if view.message:
+            if hasattr(view.message, "components") and view.message.components:
+                view.sync_cdn_urls(view.message.components)
+            self._views[view.message.id] = view
+            await view.schedule_timeout()
         return view.message
 
     async def handle_timeout(self, view: View) -> None:
-        await asyncio.sleep(self._global_timeout if view.timeout == -1 else view.timeout)
+        await asyncio.sleep(view.timeout)
 
         try:
             await view.on_timeout()

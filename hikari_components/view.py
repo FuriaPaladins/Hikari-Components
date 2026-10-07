@@ -213,6 +213,12 @@ class View:
                 except Exception:
                     continue
 
+    def restore_media_resources(self) -> None:
+        """Restores all media components in this view back to their original resources."""
+        for comp in self._walk_components():
+            if hasattr(comp, "restore_original_media"):
+                comp.restore_original_media()
+
     def disable_all_items(self) -> None:
         """Disables all interactive components in the view."""
         for item in self._walk_components():

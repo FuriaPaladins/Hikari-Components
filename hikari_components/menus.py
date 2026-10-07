@@ -40,6 +40,9 @@ class MenuScreen(View):
             return
 
         self.parent.screens.pop()
+        if self.parent.screens:
+            self.parent.screens[-1].restore_media_resources()
+
         await ctx.edit_response(components=self.parent.components)
 
 

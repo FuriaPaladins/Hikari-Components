@@ -265,6 +265,11 @@ class Thumbnail(hikari.impl.ThumbnailComponentBuilder):
         spoiler: bool = False,
     ):
         super().__init__(media=media, description=description, spoiler=spoiler)
+        self._original_media: hikari.Resourceish = media
+
+    def restore_original_media(self) -> None:
+        """Restores the original media resource if it was replaced with a CDN URL."""
+        self._media = self._original_media
 
     @property
     def media(self) -> hikari.Resourceish:
@@ -365,6 +370,11 @@ class MediaImage(hikari.impl.MediaGalleryItemBuilder):
         spoiler: bool = False,
     ):
         super().__init__(media=media, description=description, spoiler=spoiler)
+        self._original_media: hikari.files.Resourceish = media
+
+    def restore_original_media(self) -> None:
+        """Restores the original media resource if it was replaced with a CDN URL."""
+        self._media = self._original_media
 
     @property
     def media(self) -> hikari.files.Resourceish:
